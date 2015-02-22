@@ -39,10 +39,15 @@ public:
 	cApp(HINSTANCE hInstance, wstring WindowTitle_, UINT ClientWidth_, UINT ClientHeight_, bool ConsoleLogOn_);
 	~cApp(void);
 
+	////// Public Member's //////
+	UINT _UpdateSceneCount;									// Counter for first time calls in loops.
+	UINT _DrawSceneCount;									// Counter for first time calls in loops.
+
 	////// Public Method's //////
-	bool InitApp(void) override;				// initialise app
-	bool ResizeApp(void) override;				// resize app
-	bool UpdateApp(float dt) override;			// update app
+	bool InitApp(void) override;						// initialise app
+	bool ResizeApp(void) override;						// resize app	
+	bool UpdateScene(float dt) override;	// update app
+	bool DrawScene(void) override;		// render app
 };
 
 #endif	// _APP_HPP_

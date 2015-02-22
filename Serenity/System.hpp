@@ -21,6 +21,9 @@
 #include <string> 
 #include <fcntl.h>
 #include <wchar.h>
+#include <d3d11.h>
+#include <d3dx11.h>
+#include <d3dx10.h>
 
 /////////////////////////////////
 ////// Local Header file's //////
@@ -29,7 +32,9 @@
 
 /////////////////////////////////////
 ////// External Library file's //////
-
+#pragma comment (lib, "d3d11.lib")
+#pragma comment (lib, "d3dx11.lib")
+#pragma comment (lib, "d3dx10.lib")
 
 //////////////////////////////////
 ////// Local Library file's //////
@@ -55,6 +60,11 @@ public:
 	cSystem(HINSTANCE hInstance, wstring WindowTitle_, UINT ClientWidth_, UINT ClientHeight_, bool ConsoleLogOn_);
 	virtual ~cSystem(void);
 
+	////// Public Member's //////
+	HRESULT hr;
+	UINT UpdateSceneCount;									// Counter for first time calls in loops.
+	UINT DrawSceneCount;									// Counter for first time calls in loops.
+
 	////// Main loop //////
 	bool ConsoleLogOnOff(bool ConsoleLogOn_);
 	int Run(void);								// cSystem local message procedure / main loop
@@ -65,8 +75,9 @@ public:
 
 	////// Public Method's //////
 	virtual bool InitApp(void);					// initialise the app
-	virtual bool ResizeApp(void);				// resize app
-	virtual bool UpdateApp(float dt);			// upade app
+	virtual bool ResizeApp(void);				// resize app	
+	virtual bool UpdateScene(float dt);		// update app
+	virtual bool DrawScene(void);			// render app
 	LRESULT MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);	// cSystem local message procedure
 
 protected:
@@ -103,7 +114,17 @@ protected:
 
 	/////////////////////////
 	////// Direct3D 11 //////
-protected:
+public:
+	////// Direct3D 11 Member's //////
+	IDXGISwapChain *mD3D11SwapChain;             // the pointer to the swap chain interface
+	IDXGIFactory1 *mDXGIFactory;
+	ID3D11Device *mD3D11Device;                  // the pointer to our Direct3D device interface
+	ID3D11DeviceContext *mD3D11DeviceContext;    // the pointer to our Direct3D device context
+	ID3D11RenderTargetView *mD3D11BackBuffer;    // the pointer to our back buffer
+
+	////// Direct3D 11 Method's //////
+	bool InitDirect3D11(UINT width, UINT height, UINT x, UINT y);	// initalise direct 3d 11
+	bool ShutdownDirect3D11(void);				// shut down direct 3d 11
 };
 
 //////////////////////////////

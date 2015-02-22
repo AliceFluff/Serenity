@@ -1,0 +1,5 @@
+Serenity Build Log.
+
+Build(s)
+1.0 - Basic Window with Console/Log and Timer.
+1.1 - Introduced Direct3D 11, initialised d3d11, shutdown d3d11, render d3d11 backbuffer and displays the FPS in window title.
