@@ -13,36 +13,54 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\App">
+      <UniqueIdentifier>{4b20d586-c17e-43ad-9ad0-47709661e7f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\App">
+      <UniqueIdentifier>{b38998cc-81be-44f3-ab8a-fb55bc4bd854}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Subsystem%28s%29">
+      <UniqueIdentifier>{3f564371-9193-4ed4-a4c5-d75f2ced3aed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Subsystem%28s%29">
+      <UniqueIdentifier>{f8e17414-6365-40b6-86a3-04ed2d2d7069}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\System">
+      <UniqueIdentifier>{7d7025e9-1b93-4a8c-b722-78563765e75b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\System">
+      <UniqueIdentifier>{06464f61-800f-442d-bdc3-4b7252b4efc2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="System.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="App.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Time.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\App</Filter>
     </ClCompile>
     <ClCompile Include="TextLog.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Subsystem%28s%29</Filter>
+    </ClCompile>
+    <ClCompile Include="Time.cpp">
+      <Filter>Source Files\Subsystem%28s%29</Filter>
+    </ClCompile>
+    <ClCompile Include="System.cpp">
+      <Filter>Source Files\System</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="System.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="App.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Time.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\App</Filter>
     </ClInclude>
     <ClInclude Include="TextLog.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Subsystem%28s%29</Filter>
+    </ClInclude>
+    <ClInclude Include="Time.hpp">
+      <Filter>Header Files\Subsystem%28s%29</Filter>
+    </ClInclude>
+    <ClInclude Include="System.hpp">
+      <Filter>Header Files\System</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

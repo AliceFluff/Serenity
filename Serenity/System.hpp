@@ -21,6 +21,9 @@
 #include <string> 
 #include <fcntl.h>
 #include <wchar.h>
+#include <vector>
+#include <assert.h> 
+
 #include <d3d11.h>
 #include <d3dx11.h>
 #include <d3dx10.h>
@@ -88,7 +91,7 @@ protected:
 	bool ConsoleLogOn;							// log on/off switch
 
 	////// Time Representation //////
-	cTime mTime;	// high precision time object
+	cTime mTime;								// high precision time object
 
 	////// Subsystem's Method's //////
 	bool ConsoleLogOnOff(bool ConsoleLogOn_, bool TextLogOn_);
@@ -113,15 +116,33 @@ protected:
 	bool InitWindow(UINT width, UINT height, UINT x, UINT y, wstring WindowClassName, DWORD mWindowStyle);	// initalise main window
 	bool ShutdownWindow(void);					// shut down the main window
 
+	//////////////////
+	////// DXGI //////
+	////// DXGI Member's //////
+	IDXGISwapChain *mD3D11SwapChain;			// the pointer to the swap chain interface
+	IDXGIDevice1* mDXGIDevice;					// Device representing the DXGI Component
+	IDXGIAdapter1 *mDXGIAdapter;				// Respresents adapter (gfx card)	
+	IDXGIFactory1* mDXGIFactory;				// DXGI API
+	IDXGIOutput* mDXGIOutputs;					// display devices
+
+	////// DXGI Method's //////
+	bool DXGIInit(void); // initialise the DXGI 
+	std::vector<IDXGIAdapter1*> DXGIEnumerateAdapters(void);	// get all the adapters
+	bool DXGICountAdapters(void);	// count the amount of adapters in the machine
+	std::vector<IDXGIOutput*> DXGIEnumerateOutputs(void);	// enumerate the outputs available
+	bool DXGIDisplayModes(void);	// get the support display modes
+
 	/////////////////////////
 	////// Direct3D 11 //////
 public:
-	////// Direct3D 11 Member's //////
-	IDXGISwapChain *mD3D11SwapChain;             // the pointer to the swap chain interface
-	IDXGIFactory1 *mDXGIFactory;
+	////// Direct3D 11 Member's //////	
 	ID3D11Device *mD3D11Device;                  // the pointer to our Direct3D device interface
 	ID3D11DeviceContext *mD3D11DeviceContext;    // the pointer to our Direct3D device context
-	ID3D11RenderTargetView *mD3D11BackBuffer;    // the pointer to our back buffer
+	ID3D11Texture2D* mD3D11BackBuffer;
+	ID3D11RenderTargetView *mD3D11RenderTargetView;    // the pointer to our back buffer	
+	D3D11_TEXTURE2D_DESC dsv;
+	ID3D11DepthStencilView* mD3DDepthStencilView;
+	ID3D11Texture2D* mD3DDepthStencilBuffer;
 
 	////// Direct3D 11 Method's //////
 	bool InitDirect3D11(UINT width, UINT height, UINT x, UINT y);	// initalise direct 3d 11

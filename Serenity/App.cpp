@@ -95,7 +95,7 @@ bool cApp::UpdateScene(float dt)
 bool cApp::DrawScene(void)
 {
 	// clear the back buffer to a deep blue
-	mD3D11DeviceContext->ClearRenderTargetView(mD3D11BackBuffer, D3DXCOLOR(0.0f, 0.2f, 0.4f, 1.0f));
+	mD3D11DeviceContext->ClearRenderTargetView(mD3D11RenderTargetView, D3DXCOLOR(0.0f, 0.2f, 0.4f, 1.0f));
 
 	// do 3D rendering on the back buffer here
 

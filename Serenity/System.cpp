@@ -47,7 +47,7 @@ cSystem::cSystem(HINSTANCE hInstance, wstring WindowTitle_, UINT ClientWidth_, U
 	DrawSceneCount = 0;	
 
 	////// Subsystem's //////
-	ConsoleLogOn = false;	
+	ConsoleLogOn = true;
 
 	////// Win 32 Member's //////
 	mhWnd = NULL;
@@ -64,22 +64,8 @@ cSystem::~cSystem(void)
 
 }
 
-//////////////////////
-////// Method's //////
-// Decide whether console/log is on/off
-bool cSystem::ConsoleLogOnOff(bool ConsoleLogOn_, bool TextLogOn_)
-{
-	ConsoleLogOn = true;
-
-	if (ConsoleLogOn_)
-		SystemLog.OpenConsole();
-
-	if (TextLogOn_)
-		SystemLog.OpenTextLog(WindowTitle.c_str(), L"Serenity_Log");
-
-	return true;
-}
-
+///////////////////////////////////////////////
+////// Public Method's - Class interface //////
 // cSystem local message procedure / main loop
 int cSystem::Run(void)
 {
@@ -153,7 +139,142 @@ bool cSystem::ResizeApp(void)
 {
 	SystemLog.WriteLine(L" -- cSystem::ResizeApp() Begin -- ", 1, 1, 0);
 
+	GetClientRect(mhWnd, &wr);
+	mClientWidth = wr.right - wr.left;
+	mClientHeight = wr.bottom - wr.top;
 
+	if (mD3D11SwapChain != NULL)
+	{
+		assert(mD3D11DeviceContext);
+		assert(mD3D11Device);
+		assert(mD3D11SwapChain);		
+
+		// Release the old views, as they hold references to the buffers we
+		// will be destroying.  Also release the old depth/stencil buffer.
+
+		if (mD3D11RenderTargetView)
+		{
+			mD3D11RenderTargetView->Release();
+			SystemLog.WriteLine(L"cSystem::ResizeApp() - mD3D11RenderTargetView->Release() Success", 1, 1, 0);
+		}
+		else
+		{
+			SystemLog.WriteLine(L"cSystem::ResizeApp() - mD3D11RenderTargetView->Release() Failed", 1, 1, 1);
+		}
+			
+		if (mD3DDepthStencilView)
+		{
+			mD3DDepthStencilView->Release();
+			SystemLog.WriteLine(L"cSystem::ResizeApp() - mD3DDepthStencilView->Release() Success", 1, 1, 0);
+		}
+		else
+		{
+			SystemLog.WriteLine(L"cSystem::ResizeApp() - mD3DDepthStencilView->Release() Failed", 1, 1, 1);
+		}
+			
+		if (mD3DDepthStencilBuffer)
+		{
+			mD3DDepthStencilBuffer->Release();
+			SystemLog.WriteLine(L"cSystem::ResizeApp() - mD3DDepthStencilBuffer->Release() Success", 1, 1, 0);
+		}
+		else
+		{
+			SystemLog.WriteLine(L"cSystem::ResizeApp() - mD3DDepthStencilBuffer->Release() Failed", 1, 1, 1);
+		}
+
+		// Resize the swap chain and recreate the render target view.
+		if (FAILED(result = mD3D11SwapChain->ResizeBuffers(1, mClientWidth, mClientHeight, DXGI_FORMAT_R8G8B8A8_UNORM, 0)))
+		{
+			SystemLog.WriteLine(L"cSystem::ResizeApp() - mD3D11SwapChain->ResizeBuffers() Failed", 1, 1, 1);
+		}
+		else
+		{
+			SystemLog.WriteLine(L"cSystem::ResizeApp() - mD3D11SwapChain->ResizeBuffers() Success", 1, 1, 0);
+		}
+		
+		// get the address of the back buffer
+		if (FAILED(result = mD3D11SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&mD3D11RenderTargetView)))
+		{
+			SystemLog.WriteLine(L"cSystem::ResizeApp() - mD3D11SwapChain->GetBuffer() Failed", 1, 1, 1);
+		}
+		else
+		{
+			SystemLog.WriteLine(L"cSystem::ResizeApp() - mD3D11SwapChain->GetBuffer() Success", 1, 1, 0);
+		}
+		// use the back buffer address to create the render target
+		if (FAILED(result = mD3D11Device->CreateRenderTargetView(mD3D11BackBuffer, NULL, &mD3D11RenderTargetView)))
+		{
+			SystemLog.WriteLine(L"cSystem::ResizeApp() - mD3D11SwapChain->CreateRenderTargetView() Failed", 1, 1, 1);
+		}
+		else
+		{
+			SystemLog.WriteLine(L"cSystem::ResizeApp() - mD3D11SwapChain->CreateRenderTargetView() Success", 1, 1, 0);
+		}
+		if (FAILED(result = mD3D11BackBuffer->Release()))
+		{
+			SystemLog.WriteLine(L"cSystem::ResizeApp() - mD3D11BackBuffer->Release() Failed", 1, 1, 1);
+		}
+		else
+		{
+			SystemLog.WriteLine(L"cSystem::ResizeApp() - mD3D11BackBuffer->Release() Success", 1, 1, 0);
+		}
+
+		ZeroMemory(&dsv, sizeof(D3D11_TEXTURE2D_DESC));
+		dsv.Width = mClientWidth;
+		dsv.Height = mClientHeight;
+		dsv.MipLevels = 1;
+		dsv.ArraySize = 1;
+		dsv.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		dsv.SampleDesc.Count = 1;
+		dsv.SampleDesc.Quality = 0;
+		dsv.Usage = D3D11_USAGE_DEFAULT;
+		dsv.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+		dsv.CPUAccessFlags = 0;
+		dsv.MiscFlags = 0;
+
+		/*// depth stencil view description
+		dsv.Width = (mClientWidth);	// size of the depth buffer width
+		dsv.Height = (mClientHeight);	// size of the depth buffer height
+		dsv.MipLevels = 1;	// mip levels
+		dsv.ArraySize = 1;	// array size
+		dsv.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;	// format
+
+		// Use 4X MSAA? --must match swap chain MSAA values.
+		if (m_4xMsaaQuality)
+		{
+			dsv.SampleDesc.Count = 4;
+			dsv.SampleDesc.Quality = m_4xMsaaQuality - 1;
+		}
+		// No MSAA
+		else
+		{
+			dsv.SampleDesc.Count = SampleDescCount;
+			dsv.SampleDesc.Quality = SampleDescQuality;
+		}
+
+		dsv.Usage = D3D11_USAGE_DEFAULT;	// how the buffer will be used
+		dsv.BindFlags = D3D11_BIND_DEPTH_STENCIL;	// its  a depth stencil buffer
+		dsv.CPUAccessFlags = 0;	// cpu access
+		dsv.MiscFlags = 0;	// other*/
+
+		result = mD3D11Device->CreateTexture2D(&dsv, NULL, &mD3D11BackBuffer);
+		result = mD3D11Device->CreateDepthStencilView(mD3DDepthStencilBuffer, NULL, &mD3DDepthStencilView);
+
+		// set the render target as the back buffer
+		mD3D11DeviceContext->OMSetRenderTargets(1, &mD3D11RenderTargetView, mD3DDepthStencilView);
+
+		// Set the viewport
+		D3D11_VIEWPORT viewport;
+		ZeroMemory(&viewport, sizeof(D3D11_VIEWPORT));
+		viewport.TopLeftX = 0;
+		viewport.TopLeftY = 0;
+		viewport.Width = (mClientWidth);
+		viewport.Height = (mClientHeight);
+		viewport.MinDepth = 0.0f;
+		viewport.MaxDepth = 1.0f;
+
+		mD3D11DeviceContext->RSSetViewports(1, &viewport);
+	}
 
 	SystemLog.WriteLine(L" -- cSystem::ResizeApp() Success -- ", 1, 1, 0);
 	return true;
@@ -180,6 +301,23 @@ bool cSystem::DrawScene(void)
 	return true;
 }
 
+/////////////////////////
+////// Subsystem's //////
+// Decide whether console/log is on/off
+bool cSystem::ConsoleLogOnOff(bool ConsoleLogOn_, bool TextLogOn_)
+{
+	if (ConsoleLogOn_)
+		SystemLog.OpenConsole();
+
+	if (TextLogOn_)
+	{
+		SystemLog.OpenTextLog(WindowTitle.c_str(), L"Serenity_Log");
+	}
+	return true;
+}
+
+////////////////////
+////// Win 32 //////
 // cSystem local message procedure
 LRESULT cSystem::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -315,14 +453,82 @@ bool cSystem::ShutdownWindow(void)
 			return false;
 		}
 	}
-
+	Sleep(50);
 	SystemLog.WriteLine(L" -- cSystem::ShutdownWindow() Success -- ", 1, 1, 0);
 	return true;
 }
 
+//////////////////
+////// DXGI //////
+// initialise the DXGI 
+bool cSystem::DXGIInit(void)
+{
+	SystemLog.WriteLine(L" -- cSystem::DXGIInit() Begin -- ", 1, 1, 0);
+
+	// GET HOLD THE INTERFACES
+	mD3D11Device->QueryInterface(__uuidof(IDXGIDevice), (void**)&mDXGIDevice);
+	if (mDXGIDevice == NULL)
+	{
+		SystemLog.WriteLine(L"cSystem::DXGIInit() - mDXGIDevice NULL", 1, 1, 1);
+	}
+	else
+	{
+		SystemLog.WriteLine(L"cSystem::DXGIInit() - mDXGIDevice Acquired Successfully", 1, 1, 0);
+	}
+
+	mDXGIDevice->GetParent(__uuidof(IDXGIAdapter), (void**)&mDXGIAdapter);
+	if (mDXGIAdapter == NULL)
+	{
+		SystemLog.WriteLine(L"cSystem::DXGIInit() - mDXGIAdapter NULL", 1, 1, 1);
+	}
+	else
+	{
+		SystemLog.WriteLine(L"cSystem::DXGIInit() - mDXGIAdapter Acquired Successfully", 1, 1, 0);
+	}
+
+	mDXGIAdapter->GetParent(__uuidof(IDXGIFactory), (void**)&mDXGIFactory);
+	if (mDXGIFactory == NULL)
+	{
+		SystemLog.WriteLine(L"cSystem::DXGIInit() - mDXGIFactory NULL", 1, 1, 1);
+	}
+	else
+	{
+		SystemLog.WriteLine(L"cSystem::DXGIInit() - mDXGIFactory Acquired Successfully", 1, 1, 0);
+	}
+
+	SystemLog.WriteLine(L" -- cSystem::DXGIInit() Success -- ", 1, 1, 0);
+	return true;
+}
+
+/////////////////////////
+////// Direct3D 11 //////
 bool cSystem::InitDirect3D11(UINT width, UINT height, UINT x, UINT y)
 {	
 	SystemLog.WriteLine(L" -- cSystem::InitDirect3D11() Begin -- ", 1, 1, 0);
+
+	UINT createDeviceFlags = 0;
+#if defined (DEBUG) || (_DEBUG)
+	createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+
+	if (FAILED(result = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, NULL, NULL, NULL, D3D11_SDK_VERSION,
+		&mD3D11Device, NULL, &mD3D11DeviceContext)))
+	{
+		SystemLog.WriteLine(L"cSystem::InitDirect3D11() - D3D11CreateDevice() Failed", 1, 1, 1);
+	}
+	else
+	{
+		SystemLog.WriteLine(L"cSystem::InitDirect3D11() - D3D11CreateDevice() Success", 1, 1, 0);
+	}
+
+	if (!DXGIInit())
+	{
+		SystemLog.WriteLine(L"cSystem::InitDirect3D11() - DXGIInit() Failed", 1, 1, 1);
+	}
+	else
+	{
+		SystemLog.WriteLine(L"cSystem::InitDirect3D11() - DXGIInit() Success", 1, 1, 0);
+	}
 
 	// Create swapchain information
 	DXGI_SWAP_CHAIN_DESC scd;
@@ -332,25 +538,18 @@ bool cSystem::InitDirect3D11(UINT width, UINT height, UINT x, UINT y)
 	scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;			// how swap chain is to be used
 	scd.OutputWindow = mhWnd;									// the window to be used
 	scd.SampleDesc.Count = 4;									// how many multisamples
-	scd.Windowed = TRUE;										// windowed/full-screen mode
-	
-	if (FAILED(result = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE,
-		NULL, NULL,
-		NULL, NULL,
-		D3D11_SDK_VERSION,
-		&scd, &mD3D11SwapChain, &mD3D11Device,
-		NULL, &mD3D11DeviceContext)))
+	scd.Windowed = TRUE;										// windowed/full-screen mode	
+
+	// Create Swap Chain	
+	if (FAILED(result = mDXGIFactory->CreateSwapChain(mD3D11Device, &scd, &mD3D11SwapChain)))
 	{
-		SystemLog.WriteLine(L"cSystem::InitDirect3D11() - D3D11CreateDeviceAndSwapChain() Failed", 1, 1, 1);
+		SystemLog.WriteLine(L"cSystem::InitDirect3D11() - CreateSwapChain() Failed", 1, 1, 1);
 	}
 	else
 	{
-		SystemLog.WriteLine(L"cSystem::InitDirect3D11() - D3D11CreateDeviceAndSwapChain() Success", 1, 1, 0);
+		SystemLog.WriteLine(L"cSystem::InitDirect3D11() - CreateSwapChain() Success", 1, 1, 0);
 	}
 
-	// Create Swap Chain	
-
-	// Create the Device Context
 
 	// get the address of the back buffer
 	ID3D11Texture2D *pBackBuffer;
@@ -364,7 +563,7 @@ bool cSystem::InitDirect3D11(UINT width, UINT height, UINT x, UINT y)
 	}
 
 	// use the back buffer address to create the render target
-	if (FAILED(result = mD3D11Device->CreateRenderTargetView(pBackBuffer, NULL, &mD3D11BackBuffer)))
+	if (FAILED(result = mD3D11Device->CreateRenderTargetView(pBackBuffer, NULL, &mD3D11RenderTargetView)))
 	{
 		SystemLog.WriteLine(L"cSystem::InitDirect3D11() - mD3D11Device->CreateRenderTargetView() Failed", 1, 1, 1);
 	}
@@ -380,21 +579,16 @@ bool cSystem::InitDirect3D11(UINT width, UINT height, UINT x, UINT y)
 	else
 	{
 		SystemLog.WriteLine(L"cSystem::InitDirect3D11() - pBackBuffer->Release() Failed", 1, 1, 1);
+	}	
+
+	if (!ResizeApp())
+	{
+		SystemLog.WriteLine(L"cSystem::InitDirect3D11() - ResizeApp() Failed", 1, 1, 1);
 	}
-	
-
-	// set the render target as the back buffer
-	mD3D11DeviceContext->OMSetRenderTargets(1, &mD3D11BackBuffer, NULL);
-
-	// Set the viewport
-	D3D11_VIEWPORT ViewPort;
-	ZeroMemory(&ViewPort, sizeof(D3D11_VIEWPORT));
-	ViewPort.TopLeftX = 0;
-	ViewPort.TopLeftY = 0;
-	ViewPort.Width = mClientWidth;
-	ViewPort.Height = mClientHeight;
-
-	mD3D11DeviceContext->RSSetViewports(1, &ViewPort);
+	else
+	{
+		SystemLog.WriteLine(L"cSystem::InitDirect3D11() - ResizeApp() Success", 1, 1, 0);
+	}
 
 	SystemLog.WriteLine(L" -- cSystem::InitDirect3D11() Success -- ", 1, 1, 0);
 	return true;
@@ -415,9 +609,9 @@ bool cSystem::ShutdownDirect3D11(void)
 		SystemLog.WriteLine(L"cSystem::ShutdownDirect3D11() - mD3D11SwapChain->Release() Failed", 1, 1, 1);
 	}
 
-	if (mD3D11BackBuffer)
+	if (mD3D11RenderTargetView)
 	{
-		mD3D11BackBuffer->Release();
+		mD3D11RenderTargetView->Release();
 		SystemLog.WriteLine(L"cSystem::ShutdownDirect3D11() - mD3D11BackBuffer->Release() Success", 1, 1, 0);
 	}
 	else
