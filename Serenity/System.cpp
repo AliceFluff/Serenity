@@ -41,10 +41,15 @@ cSystem::cSystem(void)
 }
 cSystem::cSystem(HINSTANCE hInstance, wstring WindowTitle_, UINT ClientWidth_, UINT ClientHeight_, bool ConsoleLogOn_)
 {
-	hr = NULL;
+	////// Class Member's //////
+	result = NULL;
 	UpdateSceneCount = 0;
-	DrawSceneCount = 0;
-	// Window's Members	
+	DrawSceneCount = 0;	
+
+	////// Subsystem's //////
+	ConsoleLogOn = false;	
+
+	////// Win 32 Member's //////
 	mhWnd = NULL;
 	mhInstance = hInstance;	
 	WindowTitle = WindowTitle_.c_str();
@@ -52,9 +57,7 @@ cSystem::cSystem(HINSTANCE hInstance, wstring WindowTitle_, UINT ClientWidth_, U
 	mClientWidth = wr.right - wr.left;
 	mClientHeight = wr.bottom - wr.top;
 
-	// false true
-	if (!ConsoleLogOnOff(ConsoleLogOn_))
-		ERROR(L"cSystem::ConsoleLogOnOff() Failed");
+	ConsoleLogOnOff(true, true);
 }
 cSystem::~cSystem(void)
 {
@@ -64,29 +67,24 @@ cSystem::~cSystem(void)
 //////////////////////
 ////// Method's //////
 // Decide whether console/log is on/off
-bool cSystem::ConsoleLogOnOff(bool ConsoleLogOn_)
+bool cSystem::ConsoleLogOnOff(bool ConsoleLogOn_, bool TextLogOn_)
 {
-	if (ConsoleLogOn_ == true)
-	{
-		if (MessageBoxEx(NULL, L"Would you like Console Log on?", L"Console Log", MB_ICONQUESTION | MB_YESNO, 0) == IDYES)
-		{
-			// Open a text log
-			ConsoleLogOn = true;
-			if (!InitConsoleLog(L"\\Serenity Log(s)", L"Serenity System Log.txt"))
-				ERROR(L"cSystem::ConsoleLogOnOff() Failed to Initialise cSystem::InitConsoleLog()");
-		}
-		else
-		{
-			ConsoleLogOn = false;
-		}
+	ConsoleLogOn = true;
 
-	}
+	if (ConsoleLogOn_)
+		SystemLog.OpenConsole();
+
+	if (TextLogOn_)
+		SystemLog.OpenTextLog(WindowTitle.c_str(), L"Serenity_Log");
+
 	return true;
 }
 
 // cSystem local message procedure / main loop
 int cSystem::Run(void)
 {
+	SystemLog.WriteLine(L" -- cSystem::Run() Begin -- ", 1, 1, 0); 
+
 	MSG msg = { 0 };
 	mTime.ResetTime();
 	while (msg.message != WM_QUIT)
@@ -105,8 +103,7 @@ int cSystem::Run(void)
 				if (UpdateSceneCount <= 0)
 				{
 					UpdateSceneCount++;
-					SystemLog.ConsoleWriteString(L"cSystem::UpdateScene() Success");
-					SystemLog.OutputLogMessage(SystemLog.ConsoleWrite(SystemLog.ConsoleWriteString(L"")));					
+					SystemLog.WriteLine(L"cSystem::Run() - UpdateScene() Success", 1, 1, 0);
 				}
 			}
 
@@ -115,60 +112,71 @@ int cSystem::Run(void)
 				if (DrawSceneCount <= 0)
 				{
 					DrawSceneCount++;
-					SystemLog.ConsoleWriteString(L"cSystem::DrawScene() Success");
-					SystemLog.OutputLogMessage(SystemLog.ConsoleWrite(SystemLog.ConsoleWriteString(L"")));
+					SystemLog.WriteLine(L"cSystem::Run() - DrawScene() Success", 1, 1, 0);
 				}
 			}
 		}
 	}
+
 	if (!ShutdownDirect3D11())
-		ERROR(L"cSystem::ShutdownDirect3D11() Failed");
+		SystemLog.WriteLine(L"cSystem::Run() - ShutdownDirect3D11() Failed", 1, 1, 1);
 	if(!ShutdownWindow())
-		ERROR(L"cSystem::ShutdownWindow() Failed");	
+		SystemLog.WriteLine(L"cSystem::Run() - ShutdownWindow() Failed", 1, 1, 1);
+
+	SystemLog.WriteLine(L" -- cSystem::Run() Success -- ", 1, 1, 0);
 	return static_cast<int>(msg.wParam);
 }
 
 // initialise the app
 bool cSystem::InitApp(void)
 {
+	SystemLog.WriteLine(L" -- cSystem::InitApp() Begin -- ", 1, 1, 0);
+
 	if (!InitWindow(mClientWidth, mClientHeight, 0, 0, L"Engine_01", WS_OVERLAPPEDWINDOW))
 	{
-		SystemLog.ConsoleWriteString(L"cSystem::InitWindow() Failed");
-		SystemLog.OutputLogMessage(SystemLog.ConsoleWrite(SystemLog.ConsoleWriteString(L"")));
-		ERROR(L"cSystem::InitWindow() Failed");
+		SystemLog.WriteLine(L"cSystem::InitApp() - InitWindow() Failed", 1, 1, 1);
 		return false;
 	}
 
 	if (!InitDirect3D11(mClientWidth, mClientHeight, 0, 0))
 	{
-		SystemLog.ConsoleWriteString(L"cSystem::InitDirect3D11() Failed");
-		SystemLog.OutputLogMessage(SystemLog.ConsoleWrite(SystemLog.ConsoleWriteString(L"")));
-		ERROR(L"cSystem::InitDirect3D11() Failed");
+		SystemLog.WriteLine(L"cSystem::InitApp() - InitDirect3D11() Failed", 1, 1, 1);
 		return false;
 	}
 
-	SystemLog.ConsoleWriteString(L"cSystem::InitApp() Success");
-	SystemLog.OutputLogMessage(SystemLog.ConsoleWrite(SystemLog.ConsoleWriteString(L"")));
+	SystemLog.WriteLine(L" -- cSystem::InitApp() - InitDirect3D11() Success -- ", 1, 1, 0);
 	return true;
 }
 
 // resize app
 bool cSystem::ResizeApp(void)
 {
-	SystemLog.ConsoleWriteString(L"cSystem::ResizeApp() Success");
-	SystemLog.OutputLogMessage(SystemLog.ConsoleWrite(SystemLog.ConsoleWriteString(L"")));
+	SystemLog.WriteLine(L" -- cSystem::ResizeApp() Begin -- ", 1, 1, 0);
+
+
+
+	SystemLog.WriteLine(L" -- cSystem::ResizeApp() Success -- ", 1, 1, 0);
 	return true;
 }
 
 // upade app
 bool cSystem::UpdateScene(float dt)
 {	
+	SystemLog.WriteLine(L" -- cSystem::UpdateScene() Begin -- ", 1, 1, 0);
 
+
+
+	SystemLog.WriteLine(L" -- cSystem::UpdateScene() Success --", 1, 1, 0);
 	return true;
 }
 
 bool cSystem::DrawScene(void)
 {
+	SystemLog.WriteLine(L" -- cSystem::DrawScene() Begin -- ", 1, 1, 0);
+
+
+
+	SystemLog.WriteLine(L" -- cSystem::DrawScene() Success -- ", 1, 1, 0);
 	return true;
 }
 
@@ -220,22 +228,11 @@ LRESULT cSystem::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
-// initialise log(s)
-bool cSystem::InitConsoleLog(wstring StrDirectory_, wstring StrFileName_)
-{
-	if (!SystemLog.SetDirectryAndName(StrDirectory_.c_str(), StrFileName_.c_str()))
-	{
-		ERROR(L"cSystem::InitConsoleLog() Failed");
-		return false;
-	}
-	SystemLog.ConsoleWriteString(L"cSystem::InitConsoleLog() Success");
-	SystemLog.OutputLogMessage(SystemLog.ConsoleWrite(SystemLog.ConsoleWriteString(L"")));
-	return true;
-}
-
 // initalise main window
 bool cSystem::InitWindow(UINT width, UINT height, UINT x, UINT y, wstring WindowClassName, DWORD mWindowStyle)
 {
+	SystemLog.WriteLine(L" -- cSystem::InitWindow() Begin -- ", 1, 1, 0);
+
 	// Window Class Discription
 	WNDCLASSEX wcex;
 	ZeroMemory(&wcex, sizeof(WNDCLASSEX));
@@ -251,74 +248,82 @@ bool cSystem::InitWindow(UINT width, UINT height, UINT x, UINT y, wstring Window
 
 	if (!RegisterClassEx(&wcex))
 	{
-		SystemLog.ConsoleWriteString(L"RegisterClassEx() Failed");
-		SystemLog.OutputLogMessage(SystemLog.ConsoleWrite(SystemLog.ConsoleWriteString(L"")));
-		ERROR(L"RegisterClassEx() Failed \n");
+		SystemLog.WriteLine(L"cSystem::InitWindow() - RegisterClassEx() Failed", 1, 1, 1);
 		return false;
+	}
+	else
+	{
+		SystemLog.WriteLine(L"cSystem::InitWindow() - RegisterClassEx() Success", 1, 1, 0);
 	}
 
 	if(!AdjustWindowRect(&wr, mWindowStyle, FALSE))
 	{
-		SystemLog.ConsoleWriteString(L"AdjustWindowRect() Failed");
-		SystemLog.OutputLogMessage(SystemLog.ConsoleWrite(SystemLog.ConsoleWriteString(L"")));
-		ERROR(L"AdjustWindowRect() Failed \n");
+		SystemLog.WriteLine(L"cSystem::InitWindow() - AdjustWindowRect() Failed", 1, 1, 1);
 		return false;
 	}
 	else
 	{
 		x = GetSystemMetrics(SM_CXSCREEN) / 2 - width / 2;
 		y = GetSystemMetrics(SM_CYSCREEN) / 2 - width / 2;
+		SystemLog.WriteLine(L"cSystem::InitWindow() - AdjustWindowRect() Success", 1, 1, 0);
 	}
 	
 	if((mhWnd = CreateWindow(WindowClassName.c_str(), WindowTitle.c_str(), mWindowStyle,
 		x, y, width, height, NULL, NULL, mhInstance, NULL)) == NULL)
 	{
-		SystemLog.ConsoleWriteString(L"CreateWindow() Failed - mhWnd = NULL");
-		SystemLog.OutputLogMessage(SystemLog.ConsoleWrite(SystemLog.ConsoleWriteString(L"")));
-		ERROR(L"CreateWindow() Failed \n");
+		SystemLog.WriteLine(L"cSystem::InitWindow() - CreateWindow() Failed", 1, 1, 1);
 		return false;
+	}
+	else
+	{
+		SystemLog.WriteLine(L"cSystem::InitWindow() - CreateWindow() Success", 1, 1, 0);
 	}
 
 	if (ShowWindow(mhWnd, SW_SHOW))
 	{
-		SystemLog.ConsoleWriteString(L"ShowWindow() Failed");
-		SystemLog.OutputLogMessage(SystemLog.ConsoleWrite(SystemLog.ConsoleWriteString(L"")));
-		ERROR(L"ShowWindow() Failed \n");
+		SystemLog.WriteLine(L"cSystem::InitWindow() - ShowWindow() Failed", 1, 1, 1);
 		return false;
+	}
+	else
+	{
+		SystemLog.WriteLine(L"cSystem::InitWindow() - ShowWindow() Success", 1, 1, 0);
 	}
 	if (!UpdateWindow(mhWnd))
 	{
-		SystemLog.ConsoleWriteString(L"UpdateWindow() Failed");
-		SystemLog.OutputLogMessage(SystemLog.ConsoleWrite(SystemLog.ConsoleWriteString(L"")));
-		ERROR(L"UpdateWindow() Failed \n");
+		SystemLog.WriteLine(L"cSystem::InitWindow() - UpdateWindow() Failed", 1, 1, 1);
 		return false;
 	}
+	else
+	{
+		SystemLog.WriteLine(L"cSystem::InitWindow() - UpdateWindow() Success", 1, 1, 0);
+	}
 
-	SystemLog.ConsoleWriteString(L"cSystem::InitWindow() Success");
-	SystemLog.OutputLogMessage(SystemLog.ConsoleWrite(SystemLog.ConsoleWriteString(L"")));
+	SystemLog.WriteLine(L" -- cSystem::InitWindow() Success -- ", 1, 1, 0);
 	return true;
 }
 
 // Shut down the main window
 bool cSystem::ShutdownWindow(void)
 {
+	SystemLog.WriteLine(L" -- cSystem::ShutdownWindow() Begin -- ", 1, 1, 0);
+
 	if (ConsoleLogOn)
 	{
 		if (!SystemLog.OpenDirectory())
 		{
-			SystemLog.ConsoleWriteString(L"cSystem::ShutdownWindow() Failed - Application Shutting Down!");
-			SystemLog.OutputLogMessage(SystemLog.ConsoleWrite(SystemLog.ConsoleWriteString(L"")));
-			ERROR(L"cSystem::ShutdownWindow() Failed \n");
+			SystemLog.WriteLine(L"cSystem::ShutdownWindow() - SystemLog.OpenDirectory() Failed", 1, 1, 1);
 			return false;
 		}
 	}
-	SystemLog.ConsoleWriteString(L"cSystem::ShutdownWindow() Success\n\n**** Application Shut Down Successfully ****");
-	SystemLog.OutputLogMessage(SystemLog.ConsoleWrite(SystemLog.ConsoleWriteString(L"")));
+
+	SystemLog.WriteLine(L" -- cSystem::ShutdownWindow() Success -- ", 1, 1, 0);
 	return true;
 }
 
 bool cSystem::InitDirect3D11(UINT width, UINT height, UINT x, UINT y)
 {	
+	SystemLog.WriteLine(L" -- cSystem::InitDirect3D11() Begin -- ", 1, 1, 0);
+
 	// Create swapchain information
 	DXGI_SWAP_CHAIN_DESC scd;
 	ZeroMemory(&scd, sizeof(DXGI_SWAP_CHAIN_DESC));
@@ -329,15 +334,18 @@ bool cSystem::InitDirect3D11(UINT width, UINT height, UINT x, UINT y)
 	scd.SampleDesc.Count = 4;									// how many multisamples
 	scd.Windowed = TRUE;										// windowed/full-screen mode
 	
-	if (FAILED( hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE,
+	if (FAILED(result = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE,
 		NULL, NULL,
 		NULL, NULL,
 		D3D11_SDK_VERSION,
 		&scd, &mD3D11SwapChain, &mD3D11Device,
 		NULL, &mD3D11DeviceContext)))
 	{
-		SystemLog.ConsoleWriteString(L"cSystem::InitDirect3D11() - D3D11CreateDeviceAndSwapChain() Call Failed");
-		SystemLog.OutputLogMessage(SystemLog.ConsoleWrite(SystemLog.ConsoleWriteString(L"")));
+		SystemLog.WriteLine(L"cSystem::InitDirect3D11() - D3D11CreateDeviceAndSwapChain() Failed", 1, 1, 1);
+	}
+	else
+	{
+		SystemLog.WriteLine(L"cSystem::InitDirect3D11() - D3D11CreateDeviceAndSwapChain() Success", 1, 1, 0);
 	}
 
 	// Create Swap Chain	
@@ -346,20 +354,41 @@ bool cSystem::InitDirect3D11(UINT width, UINT height, UINT x, UINT y)
 
 	// get the address of the back buffer
 	ID3D11Texture2D *pBackBuffer;
-	mD3D11SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
+	if (FAILED(result = mD3D11SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer)))
+	{
+		SystemLog.WriteLine(L"cSystem::InitDirect3D11() - mD3D11SwapChain->GetBuffer() Failed", 1, 1, 1);
+	}
+	else
+	{
+		SystemLog.WriteLine(L"cSystem::InitDirect3D11() - mD3D11SwapChain->GetBuffer() Success", 1, 1, 0);
+	}
 
 	// use the back buffer address to create the render target
-	mD3D11Device->CreateRenderTargetView(pBackBuffer, NULL, &mD3D11BackBuffer);
-	pBackBuffer->Release();
+	if (FAILED(result = mD3D11Device->CreateRenderTargetView(pBackBuffer, NULL, &mD3D11BackBuffer)))
+	{
+		SystemLog.WriteLine(L"cSystem::InitDirect3D11() - mD3D11Device->CreateRenderTargetView() Failed", 1, 1, 1);
+	}
+	else
+	{
+		SystemLog.WriteLine(L"cSystem::InitDirect3D11() - mD3D11Device->CreateRenderTargetView() Success", 1, 1, 0);
+	}
+	if (pBackBuffer)
+	{
+		pBackBuffer->Release();
+		SystemLog.WriteLine(L"cSystem::InitDirect3D11() - pBackBuffer->Release() Success", 1, 1, 0);
+	}
+	else
+	{
+		SystemLog.WriteLine(L"cSystem::InitDirect3D11() - pBackBuffer->Release() Failed", 1, 1, 1);
+	}
+	
 
 	// set the render target as the back buffer
 	mD3D11DeviceContext->OMSetRenderTargets(1, &mD3D11BackBuffer, NULL);
 
-
 	// Set the viewport
 	D3D11_VIEWPORT ViewPort;
 	ZeroMemory(&ViewPort, sizeof(D3D11_VIEWPORT));
-
 	ViewPort.TopLeftX = 0;
 	ViewPort.TopLeftY = 0;
 	ViewPort.Width = mClientWidth;
@@ -367,27 +396,54 @@ bool cSystem::InitDirect3D11(UINT width, UINT height, UINT x, UINT y)
 
 	mD3D11DeviceContext->RSSetViewports(1, &ViewPort);
 
-	SystemLog.ConsoleWriteString(L"cSystem::InitDirect3D11() Success");
-	SystemLog.OutputLogMessage(SystemLog.ConsoleWrite(SystemLog.ConsoleWriteString(L"")));
+	SystemLog.WriteLine(L" -- cSystem::InitDirect3D11() Success -- ", 1, 1, 0);
 	return true;
 }
 
 bool cSystem::ShutdownDirect3D11(void)
 {
+	SystemLog.WriteLine(L" -- cSystem::ShutdownDirect3D11() Begin -- ", 1, 1, 0);
+
 	// close and release all existing COM objects
 	if (mD3D11SwapChain)
+	{
 		mD3D11SwapChain->Release();
+		SystemLog.WriteLine(L"cSystem::ShutdownDirect3D11() - mD3D11SwapChain->Release() Success", 1, 1, 0);
+	}
+	else
+	{
+		SystemLog.WriteLine(L"cSystem::ShutdownDirect3D11() - mD3D11SwapChain->Release() Failed", 1, 1, 1);
+	}
 
 	if (mD3D11BackBuffer)
+	{
 		mD3D11BackBuffer->Release();
+		SystemLog.WriteLine(L"cSystem::ShutdownDirect3D11() - mD3D11BackBuffer->Release() Success", 1, 1, 0);
+	}
+	else
+	{
+		SystemLog.WriteLine(L"cSystem::ShutdownDirect3D11() - mD3D11BackBuffer->Release() Failed", 1, 1, 1);
+	}		
 
 	if (mD3D11SwapChain)
+	{
 		mD3D11Device->Release();
-
+		SystemLog.WriteLine(L"cSystem::ShutdownDirect3D11() - mD3D11Device->Release() Success", 1, 1, 0);
+	}
+	else
+	{
+		SystemLog.WriteLine(L"cSystem::ShutdownDirect3D11() - mD3D11Device->Release() Failed", 1, 1, 1);
+	}
+		
 	if (mD3D11SwapChain)
+	{
 		mD3D11DeviceContext->Release();
-
-	SystemLog.ConsoleWriteString(L"cSystem::ShutdownDirect3D11() Success");
-	SystemLog.OutputLogMessage(SystemLog.ConsoleWrite(SystemLog.ConsoleWriteString(L"")));
+		SystemLog.WriteLine(L"cSystem::ShutdownDirect3D11() - mD3D11DeviceContext->Release() Success", 1, 1, 0);
+	}
+	else
+	{
+		SystemLog.WriteLine(L"cSystem::ShutdownDirect3D11() - mD3D11DeviceContext->Release() Failed", 1, 1, 1);
+	}
+	SystemLog.WriteLine(L" -- cSystem::ShutdownDirect3D11() Success -- ", 1, 1, 0);
 	return true;
 }

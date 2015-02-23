@@ -1,26 +1,6 @@
-////////////////////////////////////
-////// External Header file's //////
-
-
 /////////////////////////////////
 ////// Local Header file's //////
 #include <TextLog.hpp>
-
-/////////////////////////////////////
-////// External Library file's //////
-
-
-//////////////////////////////////
-////// Local Library file's //////
-
-
-//////////////////////////////////
-////// External Namespace's //////
-
-
-///////////////////////////////
-////// Local Namespace's //////
-
 
 ///////////////////////////
 ////// Constructor's //////
@@ -38,7 +18,8 @@ cLog::~cLog(void)
 
 //////////////////////
 ////// Method's //////
-// initalise console (not log)
+
+// initalise console KEEPING
 bool cLog::ConsoleInit(void)
 {
 	AllocConsole();
@@ -56,16 +37,142 @@ bool cLog::ConsoleInit(void)
 	*stdin = *hf_in;
 
 	system("Color 1A");
+
+	WriteLine(L"cLog Console on.", 1, 0, 0);
+
 	return true;
 }
 
-// set directoy and name for file output
-bool cLog::SetDirectryAndName(wstring StrDirectory_, wstring StrFileName_)
-{
-	mDirectoryName = StrDirectory_;
-	mFilename = StrFileName_;
+// initalise texst log KEEPING
+bool cLog::TextLogInit(wstring szDirectory_, wstring szFileName_)
+{	
+	if (!SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE, NULL, NULL, Path))
+	{
+		wstringstream buffer;
+		buffer << Path << "\\" << szDirectory_.c_str();
+		szDirectory_ = buffer.str();
+		SHCreateDirectory(NULL, szDirectory_.c_str());
+		mszLogDirectoryName = szDirectory_.c_str();
+	}
+	else
+	{
+		ERRORMSG(L"**** SHGetFolderPath() Failed to create/find %LOCALAPPDATA% Directory!! ****");
+		return false;
+	}
 
-	CreateDirectoryAndLogFile();
+	wstringstream szsFilenameBuffer;
+	szsFilenameBuffer << szDirectory_.c_str() << "\\" << mSystemTime.wYear << setfill(L'0') << setw(2)
+		<< mSystemTime.wMonth << setfill(L'0') << setw(2) << mSystemTime.wDay << "_" << setfill(L'0') << setw(2)
+		<< mSystemTime.wHour << setfill(L'0') << setw(2) << mSystemTime.wMinute << setfill(L'0') << setw(2)
+		<< mSystemTime.wSecond << "_" << szFileName_.c_str() << ".txt";
+	mszsFileName = szsFilenameBuffer.str();
+
+	if (mTxt <= 0)
+		mTxt = 1;
+
+	WriteLine(L"cLog Text File on.", 1, 1, 0);
+
+	return true;
+}
+
+// get message, write 1 line and print
+wstring cLog::WriteLine(wstring msg, bool console, bool textlog, UINT msgbox)
+{
+	wstringstream szsbuffer;
+	szsbuffer << DateStamp().c_str() << TimeStamp().c_str() << msg.c_str();
+	msg = szsbuffer.str();
+
+	switch (msgbox)
+	{
+	case 1:
+		if (console)
+			PrintMsgToConsole(msg.c_str());
+
+		if (textlog)
+			PrintMsgTotTextLog(msg.c_str());
+
+		ERRORMSG(msg.c_str());
+		break;
+
+	case 2:
+		if (console)
+			PrintMsgToConsole(msg.c_str());
+
+		if (textlog)
+			PrintMsgTotTextLog(msg.c_str());
+
+		SUCCESSMSG(msg.c_str());
+		break;
+
+	case 3:
+		if (console)
+			PrintMsgToConsole(msg.c_str());
+
+		if (textlog)
+			PrintMsgTotTextLog(msg.c_str());
+
+		INFOMSG(msg.c_str());
+		break;
+
+	default:
+		if (console)
+			PrintMsgToConsole(msg.c_str());
+
+		if (textlog)
+			PrintMsgTotTextLog(msg.c_str());
+		break;
+	}
+	
+
+	return msg.c_str();
+}
+
+// print line to console
+bool cLog::PrintMsgToConsole(wstring msg)
+{
+	wstringstream szsbuffer;
+	szsbuffer.eof();
+	szsbuffer.str(L"");
+	szsbuffer << L"\n\n" << msg.c_str();
+	msg = szsbuffer.str();
+	wprintf(msg.c_str());
+	return true;
+}
+
+// print line to text file
+bool cLog::PrintMsgTotTextLog(wstring StrLog)
+{
+	mOutStream.open(mszsFileName.c_str());
+	if (mOutStream.is_open())
+	{
+		mOutStream.eof();
+		mszsTextOut << L"\n\n" << StrLog.c_str();
+		StrLog = mszsTextOut.str();
+		mOutStream << StrLog.c_str();
+	}
+	mOutStream.close();
+	return true;
+}
+
+// open console window up during run time
+bool cLog::OpenConsole(void)
+{
+	if (MessageBox(NULL, L"Do you want to see the Console?", L"Question", MB_ICONQUESTION | MB_YESNO) == IDYES)
+	{
+		ConsoleInit();
+		WriteLine(L"Console Active", 1, 0, 0);
+	}
+	return true;
+}
+
+// open text file for recording output to file
+bool cLog::OpenTextLog(wstring szDirectory, wstring szFilename)
+{
+	if (MessageBox(NULL, L"Do you want to generate a text log?", L"Question", MB_ICONQUESTION | MB_YESNO) == IDYES)
+	{
+		TextLogInit(szDirectory.c_str(), szFilename.c_str());
+		WriteLine(L"Text Log Active", 1, 1, 0);
+	}
 	return true;
 }
 
@@ -74,107 +181,35 @@ bool cLog::OpenDirectory(void)
 {
 	if (MessageBoxEx(NULL, L"Would you like to see Log Directory?", L"Open Log(s)", MB_ICONQUESTION | MB_YESNO, 0) == IDYES)
 	{
-		ShellExecute(NULL, L"open", mDirectoryName.c_str(), NULL, NULL, SW_SHOWDEFAULT);
-		ShellExecute(NULL, L"open", mFilename.c_str(), NULL, NULL, SW_SHOWDEFAULT);
-	}
-	return true;
-}
+		WriteLine(L"Showing Directory and Text Log File.", 1, 1, 0);
 
-// write line to console
-wstring cLog::ConsoleWrite(wstring Str)
-{
-	wstringstream sStr;
-	sStr.eof();
-	sStr.str(L"");
-	sStr << L"\n\n" << DateStamp().c_str() << TimeStamp().c_str() << Str.c_str();
-	Str = sStr.str();
-	wprintf(Str.c_str());
-	return Str.c_str();
-}
-
-// write part of string to console
-wstring cLog::ConsoleWriteString(wstring Str)
-{
-	ConsoleWriteString_.eof();
-	ConsoleWriteString_ << " " << Str.c_str();
-	ConsoleString_ = ConsoleWriteString_.str();
-	return ConsoleString_.c_str();
-}
-
-// output line to txt file output in target directory
-wstring cLog::OutputLogMessage(wstring StrLog)
-{
-	mOutStream.open(mFilename.c_str());
-	if (mOutStream.is_open())
-	{
-		mOutStream.eof();
-		mSStrLogMessage << L"\n\n" << StrLog.c_str();
-		StrLog = mSStrLogMessage.str();
-		mOutStream << StrLog.c_str();
+		ShellExecute(NULL, L"open", mszLogDirectoryName.c_str(), NULL, NULL, SW_SHOWDEFAULT);
+		ShellExecute(NULL, L"open", mszsFileName.c_str(), NULL, NULL, SW_SHOWDEFAULT);
 	}
 	else
 	{
-		ConsoleWrite(L"**** Error OutputLogMessage() Failed ****\n\n");
-	}
-	mOutStream.close();
-	ConsoleWriteString_.str(L"");
-	return StrLog.c_str();
+		WriteLine(L"Not Showing Directory and Text Log File.", 1, 1, 0);
+	}	
+	return true;
 }
 
 // date stamp	
 wstring cLog::DateStamp(void)
 {
-	wstringstream mSStrDateStamp;
-	mSStrDateStamp.str(L"");
-	mSStrDateStamp << setfill(L'0') << setw(2) << mSystemTime.wYear << L"/" << setfill(L'0') << setw(2)
+	wstringstream szsBuffer;
+	szsBuffer.str(L"");
+	szsBuffer << setfill(L'0') << setw(2) << mSystemTime.wYear << L"/" << setfill(L'0') << setw(2)
 		<< mSystemTime.wMonth << L"/" << setfill(L'0') << setw(2) << mSystemTime.wDay << " ";
-	return mSStrDateStamp.str();
+	return szsBuffer.str();
 }
 
 // time stamp
 wstring cLog::TimeStamp(void)
 {
-	wstringstream mSStrTimeStamp;
-	mSStrTimeStamp.str(L"");
-	mSStrTimeStamp << setfill(L'0') << setw(2) << mSystemTime.wHour << ":" << setfill(L'0') << setw(2)
+	wstringstream szsBuffer;
+	szsBuffer.str(L"");
+	szsBuffer << setfill(L'0') << setw(2) << mSystemTime.wHour << ":" << setfill(L'0') << setw(2)
 		<< mSystemTime.wMinute << ":" << setfill(L'0') << setw(2) << mSystemTime.wSecond << " - ";
-	return mSStrTimeStamp.str();
+	return szsBuffer.str();
 }
 
-// create directory and file
-bool cLog::CreateDirectoryAndLogFile(void)
-{
-	if (!ConsoleInit())
-	{
-		MessageBox(NULL, L"ConsoleInit() Failed to Initialise!", L"ERROR", MB_ICONERROR);
-		return false;
-	}
-
-	if (!SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE, NULL, NULL, Path))
-	{
-		wstringstream mSStrDirectory;
-		mSStrDirectory << Path << mDirectoryName.c_str();
-		mDirectoryName = mSStrDirectory.str();
-		SHCreateDirectory(NULL, mDirectoryName.c_str());
-	}
-	else
-	{
-		ConsoleWriteString(L"**** SHGetFolderPath() Failed to create/find %LOCALAPPDATA% Directory!! ****");
-		ConsoleWrite(mDirectoryName.c_str());
-		OutputLogMessage(ConsoleWrite(ConsoleWriteString(L"")));
-		return false;
-	}
-
-	mSStrFilename << mDirectoryName.c_str() << "\\" << mSystemTime.wYear << setfill(L'0') << setw(2)
-		<< mSystemTime.wMonth << setfill(L'0') << setw(2) << mSystemTime.wDay << "_" << setfill(L'0') << setw(2)
-		<< mSystemTime.wHour << setfill(L'0') << setw(2) << mSystemTime.wMinute << setfill(L'0') << setw(2)
-		<< mSystemTime.wSecond << "_" << mFilename.c_str();
-	mFilename = mSStrFilename.str();
-
-	ConsoleWriteString(L"Initialising Console and Text Log.\n\n");
-	ConsoleWriteString(L"SetDirectryAndName() Success: \n");
-	ConsoleWriteString(mFilename.c_str());
-	ConsoleWriteString(mVTab);
-	OutputLogMessage(ConsoleWrite(ConsoleWriteString(L"")));
-	return true;
-}

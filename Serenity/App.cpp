@@ -42,13 +42,21 @@ cApp::~cApp(void)
 // initialise app
 bool cApp::InitApp(void)
 {
+	SystemLog.WriteLine(L" -- cApp::InitApp() Begin -- ", 1, 1, 0);
+
 	cSystem::InitApp();
+
+	SystemLog.WriteLine(L" -- cApp::InitApp() Success -- ", 1, 1, 0);
 	return true;
 }
 
 // resize app
 bool cApp::ResizeApp(void)
 {
+	SystemLog.WriteLine(L" -- cApp::ResizeApp() Begin -- ", 1, 1, 0);
+
+
+	SystemLog.WriteLine(L" -- cApp::ResizeApp() Success -- ", 1, 1, 0);
 	return true;
 }
 
@@ -77,9 +85,9 @@ bool cApp::UpdateScene(float dt)
 	if (_UpdateSceneCount <= 0)
 	{
 		_UpdateSceneCount++;
-		SystemLog.ConsoleWriteString(L"cApp::UpdateScene() Success");
-		SystemLog.OutputLogMessage(SystemLog.ConsoleWrite(SystemLog.ConsoleWriteString(L"")));
+		SystemLog.WriteLine(L" -- cApp::UpdateScene() Success -- ", 1, 1, 0);
 	}
+
 	return true;
 }
 
@@ -97,8 +105,7 @@ bool cApp::DrawScene(void)
 	if (_DrawSceneCount <= 0)
 	{
 		_DrawSceneCount++;
-		SystemLog.ConsoleWriteString(L"cApp::UpdateScene() Success");
-		SystemLog.OutputLogMessage(SystemLog.ConsoleWrite(SystemLog.ConsoleWriteString(L"")));
+		SystemLog.WriteLine(L" -- cApp::DrawScene() Success -- ", 1, 1, 0);
 	}
 	return true;
 }

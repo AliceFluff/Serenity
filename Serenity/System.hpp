@@ -60,13 +60,12 @@ public:
 	cSystem(HINSTANCE hInstance, wstring WindowTitle_, UINT ClientWidth_, UINT ClientHeight_, bool ConsoleLogOn_);
 	virtual ~cSystem(void);
 
-	////// Public Member's //////
-	HRESULT hr;
+	////// Class Member's //////
+	HRESULT result;
 	UINT UpdateSceneCount;									// Counter for first time calls in loops.
 	UINT DrawSceneCount;									// Counter for first time calls in loops.
 
-	////// Main loop //////
-	bool ConsoleLogOnOff(bool ConsoleLogOn_);
+	////// Main loop //////	
 	int Run(void);								// cSystem local message procedure / main loop
 
 	////// Get Spcific Value(s) //////
@@ -87,10 +86,12 @@ protected:
 	////// Log's //////
 	cLog SystemLog;								// log object
 	bool ConsoleLogOn;							// log on/off switch
-	bool InitConsoleLog(wstring StrDirectory_, wstring StrFileName_);	// initialise log(s)
 
 	////// Time Representation //////
 	cTime mTime;	// high precision time object
+
+	////// Subsystem's Method's //////
+	bool ConsoleLogOnOff(bool ConsoleLogOn_, bool TextLogOn_);
 
 	////////////////////
 	////// Win 32 //////

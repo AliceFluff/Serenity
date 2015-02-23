@@ -37,6 +37,12 @@
 ////// Local Namespace's //////
 using namespace std;
 
+/////////////////////////////////////////////
+////// Error Reporting Message Macro's //////
+#define ERRORMSG(m_Msg)(MessageBox(NULL, m_Msg, L"INFO!", MB_ICONERROR));
+#define SUCCESSMSG(m_Msg)(MessageBox(NULL, m_Msg, L"SUCCESS!", MB_ICONINFORMATION));
+#define INFOMSG(m_Msg)(MessageBox(NULL, m_Msg, L"INFO!", MB_ICONWARNING));
+
 ///////////////////////
 ////// Log Class //////
 class cLog
@@ -45,41 +51,41 @@ class cLog
 	////// Log Methods - Class interface //////
 public:
 	////// Constructor's //////
-	cLog(void);
-	~cLog(void);
+	cLog(void);														// Constructor
+	~cLog(void);													// Deconstructor
 
 	////// Log Methods's //////
-	bool ConsoleInit(void);						// initalise console (not log)
-	bool SetDirectryAndName(wstring StrDirectory_, wstring StrFileName_);	// set directoy and name for file output
-	bool OpenDirectory(void);					// open the file output target directory and file
+	bool ConsoleInit(void);											// initalise console KEEPING
+	bool TextLogInit(wstring szDirectory_, wstring szFileName_);	// initalise texst log KEEPING
 
-	wstring ConsoleWrite(wstring Str);			// write line to console
-	wstring ConsoleWriteString(wstring Str);	// write part of string to console
-	wstring OutputLogMessage(wstring StrLog);	// output line to txt file output in target directory
+	bool OpenConsole(void);											// open console window up during run time
+	bool OpenTextLog(wstring szDirectory, wstring szFilename);		// open text file for recording output to file
+	bool OpenDirectory(void);										// open the file output target directory and file
+
+	wstring WriteLine(wstring msg, bool console, bool textlog, UINT msgbox);		// get message, write 1 line and print
+
 
 private:
 	////// Member's //////
-	SYSTEMTIME mSystemTime;						// system time represention
-	wofstream mOutStream;						// stream out text to file
+	UINT mCon = 0;
+	UINT mTxt = 0;
 
-	TCHAR Path[512];							// directory path
-	wstring mDirectoryName;						// complete directory path
+	SYSTEMTIME mSystemTime;											// system time represention
+	wofstream mOutStream;											// stream out text to file
 
-	wstringstream mSStrFilename;				// file name
-	wstring mFilename;							// complete file name
-
-	wstringstream mSStrLogMessage;				// string stream for log message
-	wstringstream ConsoleWriteString_;			// string stream for console message
-	wstring ConsoleString_;						// string for console message
-
-	wstring mVTab;								// virticle tab
-	wstring mHTab;								// horizontal tab
+	TCHAR Path[1024];												// directory path buffer
+	wstring mszLogDirectoryName;									// complete directory path
+	wstring mszsFileName;											// Text File Neame
+	wstringstream mszsTextOut;										// Text output for text file log
+	wstring mVTab;													// virticle tab
+	wstring mHTab;													// horizontal tab
 
 	////// Method's //////
-	wstring DateStamp(void);					// time stamp
-	wstring TimeStamp(void);					// date stamp	
+	wstring DateStamp(void);										// time stamp
+	wstring TimeStamp(void);										// date stamp	
 
-	bool CreateDirectoryAndLogFile(void);
+	bool PrintMsgToConsole(wstring msg);							// print line to console
+	bool PrintMsgTotTextLog(wstring StrLog);						// print line to text file
 };
 
 #endif // !_LOG_HPP_
